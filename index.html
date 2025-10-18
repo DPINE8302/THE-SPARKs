@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>THE SPARKs</title>
   <style>
-    /* === CSS (Existing CSS from V1.0) === */
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700&display=swap');
     @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap');
 
@@ -17,19 +16,36 @@
       --button-bg-color: transparent;
       --button-icon-color: #555;
       --button-hover-icon-color: #007aff;
-      --quote-text-color: #2c2c2c; 
-      --quote-bg-color: #fbfaf7; 
+      --quote-text-color: #2c2c2c;
+      --quote-bg-color: #fbfaf7;
       --quote-shadow-color: rgba(0, 0, 0, 0.07);
-      --quote-mark-color: #a08c78; 
+      --quote-mark-color: #a08c78;
       --font-family-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI",
         Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji",
         "Segoe UI Emoji", "Segoe UI Symbol";
-      --font-family-serif-quote: 'Playfair Display', Georgia, serif; 
+      --font-family-serif-quote: 'Playfair Display', Georgia, serif;
       --footer-text-color: #777;
       --lang-button-bg: #f0f0f0;
       --lang-button-text: #555;
       --lang-button-active-bg: var(--input-focus-border-color);
       --lang-button-active-text: #fff;
+      --transition-speed: 0.3s;
+    }
+
+    body.dark-mode {
+      --background-color: #121212;
+      --text-color: #e0e0e0;
+      --input-border-color: #333;
+      --input-focus-border-color: #0a84ff; /* Apple Blue Dark */
+      --button-icon-color: #bbb;
+      --button-hover-icon-color: #0a84ff;
+      --quote-text-color: #f5f5f5;
+      --quote-bg-color: #1e1e1e;
+      --quote-shadow-color: rgba(0, 0, 0, 0.25);
+      --quote-mark-color: #a89a8c;
+      --footer-text-color: #888;
+      --lang-button-bg: #2c2c2c;
+      --lang-button-text: #ccc;
     }
 
     body {
@@ -47,6 +63,7 @@
       text-rendering: optimizeLegibility;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
+      transition: background-color var(--transition-speed) ease, color var(--transition-speed) ease;
     }
 
     .container {
@@ -56,15 +73,20 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      flex-grow: 1; 
+      flex-grow: 1;
       justify-content: center;
       position: relative;
     }
 
-    .settings-btn {
+    .top-controls {
         position: absolute;
         top: 0px;
         right: 0px;
+        display: flex;
+        gap: 8px;
+    }
+
+    .icon-btn {
         background: none;
         border: none;
         cursor: pointer;
@@ -74,23 +96,36 @@
         align-items: center;
         justify-content: center;
         transition: background-color 0.2s ease, transform 0.2s ease;
+        position: relative;
+        width: 40px;
+        height: 40px;
     }
-
-    .settings-btn svg {
+    .icon-btn svg {
         stroke: #888;
-        transition: stroke 0.2s ease;
+        transition: stroke 0.2s ease, opacity 0.3s ease, transform 0.3s ease;
     }
-
-    .settings-btn:hover {
-        background-color: #f0f0f0;
+    .icon-btn:hover {
+        background-color: rgba(0,0,0,0.05);
+    }
+    .dark-mode .icon-btn:hover {
+        background-color: #2c2c2c;
+    }
+    .icon-btn:hover svg {
+        stroke: var(--input-focus-border-color);
+    }
+    #settingsBtn:hover {
         transform: rotate(15deg);
     }
 
-    .settings-btn:hover svg {
-        stroke: var(--input-focus-border-color);
+    #themeToggleBtn svg {
+      position: absolute;
     }
+    #themeToggleBtn .moon { opacity: 0; transform: scale(0); }
+    #themeToggleBtn .sun { opacity: 1; transform: scale(1); }
+    body.dark-mode #themeToggleBtn .moon { opacity: 1; transform: scale(1); }
+    body.dark-mode #themeToggleBtn .sun { opacity: 0; transform: scale(0); }
 
-    /* NEW: Language Selector Styles */
+
     .language-selector {
         margin-bottom: 20px;
         display: flex;
@@ -111,26 +146,31 @@
         border-color: #ccc;
         background-color: #e7e7e7;
     }
+    .dark-mode .lang-btn:hover {
+        border-color: #555;
+        background-color: #3a3a3a;
+    }
     .lang-btn.active {
         background-color: var(--lang-button-active-bg);
         color: var(--lang-button-active-text);
         border-color: var(--lang-button-active-bg);
     }
 
-
     .search-container {
       display: flex;
       align-items: center;
       width: 100%;
       max-width: 580px;
-      margin-bottom: 45px; 
+      margin-bottom: 45px;
       background-color: #fff;
       border: 1px solid var(--input-border-color);
       border-radius: 24px;
       box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-      transition: box-shadow 0.2s ease-in-out, border-color 0.2s ease-in-out;
+      transition: box-shadow 0.2s ease-in-out, border-color 0.2s ease-in-out, background-color var(--transition-speed) ease;
     }
-
+    .dark-mode .search-container {
+      background-color: #1e1e1e;
+    }
     .search-container:focus-within {
       border-color: var(--input-focus-border-color);
       box-shadow: 0 2px 10px rgba(0, 122, 255, 0.15);
@@ -146,16 +186,17 @@
       background-color: transparent;
       color: var(--text-color);
       border-radius: 24px 0 0 24px;
+      transition: background-color var(--transition-speed) ease, color var(--transition-speed) ease;
     }
-    
+
     #topicInput:disabled {
       background-color: #f9f9f9;
       cursor: not-allowed;
     }
-
-    #topicInput::placeholder {
-      color: #999;
+    .dark-mode #topicInput:disabled {
+      background-color: #252525;
     }
+    #topicInput::placeholder { color: #999; }
 
     #generateBtn {
       background-color: var(--button-bg-color);
@@ -168,19 +209,13 @@
       border-radius: 0 24px 24px 0;
       transition: background-color 0.2s ease;
     }
-    
-    #generateBtn:disabled svg {
-        stroke: #bbb;
-    }
-    #generateBtn:disabled {
-        cursor: not-allowed;
-    }
 
+    #generateBtn:disabled svg { stroke: #bbb; }
+    #generateBtn:disabled { cursor: not-allowed; }
     #generateBtn svg {
       stroke: var(--button-icon-color);
       transition: stroke 0.2s ease-in-out;
     }
-
     #generateBtn:hover:not(:disabled) svg,
     #generateBtn:focus:not(:disabled) svg {
       stroke: var(--button-hover-icon-color);
@@ -188,67 +223,68 @@
 
     .quote-display {
       font-family: var(--font-family-serif-quote);
-      margin-top: 25px;
-      font-size: clamp(1.4rem, 3.5vw, 2.2rem); 
-      font-weight: 500; 
+      font-size: clamp(1.4rem, 3.5vw, 2.2rem);
+      font-weight: 500;
       color: var(--quote-text-color);
-      line-height: 1.7; 
+      line-height: 1.7;
       min-height: 100px;
-      display: flex; 
-      flex-direction: column; 
-      justify-content: center; 
-      align-items: center; 
+      display: flex;
+      justify-content: center;
+      align-items: center;
       opacity: 0;
       transform: translateY(20px);
-      transition: opacity 0.6s cubic-bezier(0.22, 1, 0.36, 1), 
-                  transform 0.6s cubic-bezier(0.22, 1, 0.36, 1), 
-                  background-color 0.5s ease, 
+      transition: opacity 0.6s cubic-bezier(0.22, 1, 0.36, 1),
+                  transform 0.6s cubic-bezier(0.22, 1, 0.36, 1),
+                  background-color 0.5s ease,
                   box-shadow 0.5s ease;
-      max-width: 85%; 
+      max-width: 85%;
       white-space: pre-wrap;
-      padding: 30px 35px; 
-      border-radius: 8px; 
-      text-align: center; 
+      padding: 30px 35px;
+      border-radius: 8px;
+      text-align: center;
       background-color: transparent;
       box-shadow: none;
-      border: 1px solid transparent; 
     }
-
     .quote-display.visible {
       opacity: 1;
       transform: translateY(0);
+    }
+    .quote-display.has-content {
       background-color: var(--quote-bg-color);
       box-shadow: 0 5px 25px var(--quote-shadow-color);
     }
+    .dark-mode .quote-display.has-content {
+      border: 1px solid #333;
+    }
+
+    .initial-message {
+        font-family: var(--font-family-sans);
+        font-size: 1.1rem;
+        color: #888;
+        font-weight: 400;
+        line-height: 1.6;
+    }
+    .dark-mode .initial-message { color: #777; }
 
     .quote-mark {
         color: var(--quote-mark-color);
-        font-weight: 600; 
-        font-size: 1.1em; 
-        font-style: italic; 
-        margin: 0 0.1em; 
+        font-weight: 600;
+        font-size: 1.1em;
+        font-style: italic;
+        margin: 0 0.1em;
     }
-    .quote-mark.open {
-        margin-right: 0.2em;
-    }
-    .quote-mark.close {
-        margin-left: 0.2em;
-    }
-
+    .quote-mark.open { margin-right: 0.2em; }
+    .quote-mark.close { margin-left: 0.2em; }
 
     .loading-indicator,
     .error-display {
       margin-top: 20px;
       font-size: 1rem;
-      font-family: var(--font-family-sans); 
+      font-family: var(--font-family-sans);
       color: #777;
       min-height: 20px;
     }
-
-    .error-display {
-      color: #d93025;
-      font-weight: 500;
-    }
+    .error-display { color: #d93025; font-weight: 500; }
 
     .footer-credits {
         font-family: var(--font-family-sans);
@@ -259,137 +295,85 @@
         width: 100%;
         line-height: 1.5;
     }
-
-    .footer-credits span {
-        display: block;
-        margin-bottom: 4px;
-    }
-
-    .footer-credits span:last-child {
-        margin-bottom: 0;
-    }
+    .footer-credits span { display: block; margin-bottom: 4px; }
+    .footer-credits span:last-child { margin-bottom: 0; }
 
     /* Modal Styles */
     .modal-overlay {
         position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
+        top: 0; left: 0; width: 100%; height: 100%;
         background-color: rgba(0, 0, 0, 0.6);
-        display: flex;
-        justify-content: center;
-        align-items: center;
+        display: flex; justify-content: center; align-items: center;
         z-index: 1000;
         opacity: 0;
         transition: opacity 0.3s ease;
         backdrop-filter: blur(5px);
     }
-
-    .modal-overlay.visible {
-        opacity: 1;
-    }
-
+    .modal-overlay.visible { opacity: 1; }
     .modal {
         background: var(--background-color);
         padding: 25px 30px;
         border-radius: 12px;
         box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-        width: 90%;
-        max-width: 500px;
+        width: 90%; max-width: 500px;
         transform: scale(0.95);
-        transition: transform 0.3s ease;
+        transition: transform 0.3s ease, background-color var(--transition-speed) ease;
     }
-
-    .modal-overlay.visible .modal {
-        transform: scale(1);
-    }
-
+    .dark-mode .modal { box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4); }
+    .modal-overlay.visible .modal { transform: scale(1); }
     .modal-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
+        display: flex; justify-content: space-between; align-items: center;
         border-bottom: 1px solid var(--input-border-color);
-        padding-bottom: 15px;
-        margin-bottom: 20px;
+        padding-bottom: 15px; margin-bottom: 20px;
     }
-
-    .modal-header h2 {
-        margin: 0;
-        font-size: 1.3rem;
-        font-weight: 600;
-    }
-
+    .modal-header h2 { margin: 0; font-size: 1.3rem; font-weight: 600; }
     .close-btn {
-        background: none;
-        border: none;
-        font-size: 2rem;
-        font-weight: 300;
-        line-height: 1;
-        color: #888;
-        cursor: pointer;
-        transition: color 0.2s ease;
+        background: none; border: none; font-size: 2rem;
+        font-weight: 300; line-height: 1; color: #888;
+        cursor: pointer; transition: color 0.2s ease;
     }
-    .close-btn:hover {
-        color: #333;
-    }
+    .close-btn:hover { color: #333; }
+    .dark-mode .close-btn:hover { color: #fff; }
 
     .modal-body p {
-        font-size: 0.95rem;
-        color: #555;
-        line-height: 1.6;
-        margin-bottom: 15px;
+        font-size: 0.95rem; color: #555;
+        line-height: 1.6; margin-bottom: 15px;
     }
+    .dark-mode .modal-body p { color: #ccc; }
     .modal-body p a {
         color: var(--input-focus-border-color);
-        text-decoration: none;
-        font-weight: 500;
+        text-decoration: none; font-weight: 500;
     }
-    .modal-body p a:hover {
-        text-decoration: underline;
-    }
+    .modal-body p a:hover { text-decoration: underline; }
 
     .api-key-input {
-        width: 100%;
-        padding: 12px 15px;
-        font-size: 1rem;
-        border-radius: 8px;
-        border: 1px solid var(--input-border-color);
-        box-sizing: border-box;
-        margin-top: 10px;
-        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        width: 100%; padding: 12px 15px; font-size: 1rem;
+        border-radius: 8px; border: 1px solid var(--input-border-color);
+        box-sizing: border-box; margin-top: 10px;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color var(--transition-speed) ease;
+        background-color: var(--background-color);
+        color: var(--text-color);
     }
     .api-key-input:focus {
         outline: none;
         border-color: var(--input-focus-border-color);
         box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
     }
-
-    .modal-footer {
-        text-align: right;
-        margin-top: 25px;
+    .dark-mode .api-key-input:focus {
+        box-shadow: 0 0 0 3px rgba(10, 132, 255, 0.25);
     }
-
+    .modal-footer { text-align: right; margin-top: 25px; }
     .modal-btn {
-        padding: 10px 25px;
-        font-size: 1rem;
-        font-weight: 500;
-        border-radius: 8px;
-        cursor: pointer;
-        border: none;
+        padding: 10px 25px; font-size: 1rem; font-weight: 500;
+        border-radius: 8px; cursor: pointer; border: none;
         transition: background-color 0.2s ease, transform 0.1s ease;
     }
-
     .save-btn {
         background-color: var(--input-focus-border-color);
         color: white;
     }
-    .save-btn:hover {
-        background-color: #0062cc;
-    }
-    .save-btn:active {
-        transform: scale(0.98);
-    }
+    .save-btn:hover { background-color: #0062cc; }
+    .save-btn:active { transform: scale(0.98); }
   </style>
 <script type="importmap">
 {
@@ -401,9 +385,16 @@
 </head>
 <body>
   <div class="container">
-    <button id="settingsBtn" class="settings-btn" aria-label="API Key Settings">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.07-.47 0-.59.22L2.92 8.81c-.11.2-.06.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59-1.69-.98l2.49 1c.23.07.47 0 .59-.22l1.92-3.32c.12-.22.06-.47-.12-.61l-2.03-1.58zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"/></svg>
-    </button>
+    <div class="top-controls">
+        <button id="themeToggleBtn" class="icon-btn" aria-label="Toggle dark mode">
+            <svg class="sun" xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+            <svg class="moon" xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+        </button>
+        <button id="settingsBtn" class="icon-btn" aria-label="API Key Settings">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.07-.47 0-.59.22L2.92 8.81c-.11.2-.06.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59-1.69-.98l2.49 1c.23.07.47 0 .59-.22l1.92-3.32c.12-.22.06-.47-.12-.61l-2.03-1.58zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"/></svg>
+        </button>
+    </div>
+
     <div class="language-selector">
         <button class="lang-btn active" data-lang="en" id="langBtnEn">English</button>
         <button class="lang-btn" data-lang="th" id="langBtnTh">ไทย (Thai)</button>
@@ -427,7 +418,6 @@
           stroke-width="2"
           stroke-linecap="round"
           stroke-linejoin="round"
-          class="feather feather-arrow-right-circle"
         >
           <circle cx="12" cy="12" r="10"></circle>
           <polyline points="12 16 16 12 12 8"></polyline>
@@ -436,9 +426,7 @@
       </button>
     </div>
     <div id="quoteDisplay" class="quote-display" aria-live="polite"></div>
-    <div id="loadingIndicator" class="loading-indicator" style="display: none;">
-      Finding that perfect line...
-    </div>
+    <div id="loadingIndicator" class="loading-indicator" style="display: none;"></div>
     <div id="errorDisplay" class="error-display" style="display: none;"></div>
   </div>
 

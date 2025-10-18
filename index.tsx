@@ -12,6 +12,7 @@ const loadingIndicator = document.getElementById('loadingIndicator') as HTMLDivE
 const errorDisplay = document.getElementById('errorDisplay') as HTMLDivElement;
 const langBtnEn = document.getElementById('langBtnEn') as HTMLButtonElement;
 const langBtnTh = document.getElementById('langBtnTh') as HTMLButtonElement;
+const themeToggleBtn = document.getElementById('themeToggleBtn') as HTMLButtonElement;
 
 // API Key Modal Elements
 const settingsBtn = document.getElementById('settingsBtn') as HTMLButtonElement;
@@ -24,13 +25,23 @@ const saveApiKeyBtn = document.getElementById('saveApiKeyBtn') as HTMLButtonElem
 let currentLanguage = 'en'; // Default language
 let currentApiKey: string | null = null;
 let ai: GoogleGenAI | null = null;
+const loadingMessages = [
+    "Distilling a thought...",
+    "Finding that perfect line...",
+    "Searching the cosmos for a spark...",
+    "Crafting a moment of clarity...",
+    "Just a second, inspiration is brewing...",
+];
 
 
 // --- API Key Management ---
 
 function showApiKeyModal() {
     apiKeyModal.style.display = 'flex';
-    setTimeout(() => apiKeyModal.classList.add('visible'), 10);
+    setTimeout(() => {
+        apiKeyModal.classList.add('visible');
+        apiKeyInput.focus();
+    }, 10);
 }
 
 function hideApiKeyModal() {
@@ -70,7 +81,7 @@ function loadApiKey() {
     }
 }
 
-// --- UI & Language ---
+// --- UI, Language & Theme ---
 
 function updatePlaceholder() {
     if (currentLanguage === 'en') {
@@ -86,10 +97,46 @@ function setLanguage(lang: 'en' | 'th') {
         langBtnEn.classList.toggle('active', lang === 'en');
         langBtnTh.classList.toggle('active', lang === 'th');
         updatePlaceholder();
-        quoteDisplay.classList.remove('visible');
+        quoteDisplay.classList.remove('visible', 'has-content');
         quoteDisplay.innerHTML = '';
+        setTimeout(() => {
+            quoteDisplay.innerHTML = `<div class="initial-message">What's on your mind?<br>A spark awaits.</div>`;
+            quoteDisplay.classList.add('visible');
+        }, 600);
     }
 }
+
+function applyTheme(theme: 'light' | 'dark') {
+    if (theme === 'dark') {
+        document.body.classList.add('dark-mode');
+    } else {
+        document.body.classList.remove('dark-mode');
+    }
+}
+
+function toggleTheme() {
+    const isDarkMode = document.body.classList.contains('dark-mode');
+    if (isDarkMode) {
+        applyTheme('light');
+        localStorage.setItem('theme', 'light');
+    } else {
+        applyTheme('dark');
+        localStorage.setItem('theme', 'dark');
+    }
+}
+
+function initializeTheme() {
+    const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null;
+    const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    if (savedTheme) {
+        applyTheme(savedTheme);
+    } else if (systemPrefersDark) {
+        applyTheme('dark');
+    } else {
+        applyTheme('light');
+    }
+}
+
 
 // --- Quote Generation ---
 
@@ -101,10 +148,11 @@ async function generateQuote(topic: string) {
         return;
     }
 
-    quoteDisplay.classList.remove('visible');
-    quoteDisplay.innerHTML = '';
+    quoteDisplay.classList.remove('visible', 'has-content');
     errorDisplay.style.display = 'none';
     errorDisplay.textContent = '';
+    const randomMessage = loadingMessages[Math.floor(Math.random() * loadingMessages.length)];
+    loadingIndicator.textContent = randomMessage;
     loadingIndicator.style.display = 'block';
     generateBtn.disabled = true;
     topicInput.disabled = true;
@@ -136,7 +184,7 @@ async function generateQuote(topic: string) {
         if (generatedText) {
             const cleanText = generatedText.replace(/\*/g, '').replace(/^["“„']+|["””']$/g, '').trim();
             quoteDisplay.innerHTML = `<span class="quote-mark open">“</span>${cleanText}<span class="quote-mark close">”</span>`;
-            quoteDisplay.classList.add('visible');
+            quoteDisplay.classList.add('visible', 'has-content');
         } else {
             throw new Error('Model returned an empty response.');
         }
@@ -154,7 +202,6 @@ async function generateQuote(topic: string) {
         }
         errorDisplay.textContent = errorMessage;
         errorDisplay.style.display = 'block';
-        quoteDisplay.classList.remove('visible');
     } finally {
         loadingIndicator.style.display = 'none';
         generateBtn.disabled = false;
@@ -175,8 +222,7 @@ generateBtn.addEventListener('click', () => {
         }
         errorDisplay.textContent = emptyTopicMsg;
         errorDisplay.style.display = 'block';
-        quoteDisplay.classList.remove('visible');
-        quoteDisplay.innerHTML = '';
+        quoteDisplay.classList.remove('visible', 'has-content');
     }
 });
 
@@ -190,6 +236,7 @@ topicInput.addEventListener('keydown', (e) => {
 langBtnEn.addEventListener('click', () => setLanguage('en'));
 langBtnTh.addEventListener('click', () => setLanguage('th'));
 
+themeToggleBtn.addEventListener('click', toggleTheme);
 settingsBtn.addEventListener('click', showApiKeyModal);
 closeModalBtn.addEventListener('click', hideApiKeyModal);
 saveApiKeyBtn.addEventListener('click', saveApiKey);
@@ -202,6 +249,9 @@ apiKeyModal.addEventListener('click', (e) => {
 
 // --- Initialization ---
 document.addEventListener('DOMContentLoaded', () => {
+    initializeTheme();
     updatePlaceholder();
     loadApiKey();
+    quoteDisplay.innerHTML = `<div class="initial-message">What's on your mind?<br>A spark awaits.</div>`;
+    quoteDisplay.classList.add('visible');
 });
