@@ -13,18 +13,15 @@ const errorDisplay = document.getElementById('errorDisplay') as HTMLDivElement;
 const langBtnEn = document.getElementById('langBtnEn') as HTMLButtonElement;
 const langBtnTh = document.getElementById('langBtnTh') as HTMLButtonElement;
 const themeToggleBtn = document.getElementById('themeToggleBtn') as HTMLButtonElement;
-
-// API Key Modal Elements
 const settingsBtn = document.getElementById('settingsBtn') as HTMLButtonElement;
 const apiKeyModal = document.getElementById('apiKeyModal') as HTMLDivElement;
 const closeModalBtn = document.getElementById('closeModalBtn') as HTMLButtonElement;
-const apiKeyInput = document.getElementById('apiKeyInput') as HTMLInputElement;
 const saveApiKeyBtn = document.getElementById('saveApiKeyBtn') as HTMLButtonElement;
+const apiKeyInput = document.getElementById('apiKeyInput') as HTMLInputElement;
 
 // State
 let currentLanguage = 'en'; // Default language
-let currentApiKey: string | null = null;
-let ai: GoogleGenAI | null = null;
+let ai: GoogleGenAI;
 const loadingMessages = [
     "Distilling a thought...",
     "Finding that perfect line...",
@@ -34,14 +31,25 @@ const loadingMessages = [
 ];
 
 
-// --- API Key Management ---
+// --- API Key Management & Initialization ---
+
+function initializeAiClient(apiKey: string) {
+    try {
+        ai = new GoogleGenAI({ apiKey });
+        return true;
+    } catch (error) {
+        console.error("Failed to initialize GoogleGenAI client:", error);
+        return false;
+    }
+}
 
 function showApiKeyModal() {
+    const savedKey = localStorage.getItem('gemini_api_key');
+    if (savedKey) {
+        apiKeyInput.value = savedKey;
+    }
     apiKeyModal.style.display = 'flex';
-    setTimeout(() => {
-        apiKeyModal.classList.add('visible');
-        apiKeyInput.focus();
-    }, 10);
+    setTimeout(() => apiKeyModal.classList.add('visible'), 10);
 }
 
 function hideApiKeyModal() {
@@ -52,34 +60,19 @@ function hideApiKeyModal() {
 }
 
 function saveApiKey() {
-    const key = apiKeyInput.value.trim();
-    if (key) {
-        localStorage.setItem('gemini-api-key', key);
-        currentApiKey = key;
-        ai = new GoogleGenAI({ apiKey: currentApiKey });
-        hideApiKeyModal();
-        topicInput.disabled = false;
-        generateBtn.disabled = false;
-        errorDisplay.style.display = 'none';
+    const apiKey = apiKeyInput.value.trim();
+    if (apiKey) {
+        if (initializeAiClient(apiKey)) {
+            localStorage.setItem('gemini_api_key', apiKey);
+            hideApiKeyModal();
+        } else {
+             alert('Invalid API Key format. Could not initialize AI Client.');
+        }
     } else {
-        alert('Please enter a valid API key.');
+        alert('Please enter an API Key.');
     }
 }
 
-function loadApiKey() {
-    const savedKey = localStorage.getItem('gemini-api-key');
-    if (savedKey) {
-        currentApiKey = savedKey;
-        apiKeyInput.value = currentApiKey;
-        ai = new GoogleGenAI({ apiKey: currentApiKey });
-        topicInput.disabled = false;
-        generateBtn.disabled = false;
-    } else {
-        showApiKeyModal();
-        topicInput.disabled = true;
-        generateBtn.disabled = true;
-    }
-}
 
 // --- UI, Language & Theme ---
 
@@ -100,7 +93,10 @@ function setLanguage(lang: 'en' | 'th') {
         quoteDisplay.classList.remove('visible', 'has-content');
         quoteDisplay.innerHTML = '';
         setTimeout(() => {
-            quoteDisplay.innerHTML = `<div class="initial-message">What's on your mind?<br>A spark awaits.</div>`;
+            const initialMessage = currentLanguage === 'en'
+                ? `What's on your mind?<br>A spark awaits.`
+                : `คุณกำลังคิดอะไรอยู่?<br>แรงบันดาลใจรออยู่`;
+            quoteDisplay.innerHTML = `<div class="initial-message">${initialMessage}</div>`;
             quoteDisplay.classList.add('visible');
         }, 600);
     }
@@ -142,7 +138,7 @@ function initializeTheme() {
 
 async function generateQuote(topic: string) {
     if (!ai) {
-        errorDisplay.textContent = 'API Key not configured. Please set it in the settings.';
+        errorDisplay.textContent = 'API Key not set. Please set it in the settings.';
         errorDisplay.style.display = 'block';
         showApiKeyModal();
         return;
@@ -175,7 +171,8 @@ async function generateQuote(topic: string) {
             contents: prompt,
             config: {
                 "temperature": 0.85,
-                "maxOutputTokens": 80,
+                "maxOutputTokens": 256,
+                "thinkingConfig": { "thinkingBudget": 128 }
             }
         });
 
@@ -186,7 +183,30 @@ async function generateQuote(topic: string) {
             quoteDisplay.innerHTML = `<span class="quote-mark open">“</span>${cleanText}<span class="quote-mark close">”</span>`;
             quoteDisplay.classList.add('visible', 'has-content');
         } else {
-            throw new Error('Model returned an empty response.');
+            let detailedError = 'Model returned an empty response for an unknown reason.';
+            // Check for prompt blocking first
+            if (response.promptFeedback?.blockReason) {
+                detailedError = `Your prompt was blocked: ${response.promptFeedback.blockReason}. Please try a different topic.`;
+            } 
+            // Then check for response blocking
+            else if (response.candidates && response.candidates.length > 0 && response.candidates[0].finishReason && response.candidates[0].finishReason !== 'STOP') {
+                const finishReason = response.candidates[0].finishReason;
+                switch (finishReason) {
+                    case 'SAFETY':
+                        detailedError = 'The response was blocked for safety reasons. Please try a different topic.';
+                        break;
+                    case 'RECITATION':
+                         detailedError = 'The response was blocked to prevent recitation. Please try a different topic.';
+                        break;
+                    case 'MAX_TOKENS':
+                        detailedError = 'The response was cut off because it reached the maximum length.';
+                        break;
+                    default:
+                        detailedError = `Model stopped generating for an unexpected reason: ${finishReason}`;
+                        break;
+                }
+            }
+            throw new Error(detailedError);
         }
 
     } catch (error) {
@@ -194,7 +214,7 @@ async function generateQuote(topic: string) {
         let errorMessage = 'An error occurred. Please try again.';
         if (error instanceof Error) {
             if (error.message.includes('API key not valid')) {
-                errorMessage = 'Your API Key is invalid. Please check it in the settings.';
+                errorMessage = 'Your API key is not valid. Please check it in the settings.';
                 showApiKeyModal();
             } else {
                 errorMessage = `Error: ${error.message}`;
@@ -240,7 +260,6 @@ themeToggleBtn.addEventListener('click', toggleTheme);
 settingsBtn.addEventListener('click', showApiKeyModal);
 closeModalBtn.addEventListener('click', hideApiKeyModal);
 saveApiKeyBtn.addEventListener('click', saveApiKey);
-
 apiKeyModal.addEventListener('click', (e) => {
     if (e.target === apiKeyModal) {
         hideApiKeyModal();
@@ -251,7 +270,18 @@ apiKeyModal.addEventListener('click', (e) => {
 document.addEventListener('DOMContentLoaded', () => {
     initializeTheme();
     updatePlaceholder();
-    loadApiKey();
-    quoteDisplay.innerHTML = `<div class="initial-message">What's on your mind?<br>A spark awaits.</div>`;
+    
+    const initialMessage = currentLanguage === 'en'
+        ? `What's on your mind?<br>A spark awaits.`
+        : `คุณกำลังคิดอะไรอยู่?<br>แรงบันดาลใจรออยู่`;
+
+    quoteDisplay.innerHTML = `<div class="initial-message">${initialMessage}</div>`;
     quoteDisplay.classList.add('visible');
+
+    const savedApiKey = localStorage.getItem('gemini_api_key');
+    if (savedApiKey) {
+        initializeAiClient(savedApiKey);
+    } else {
+        setTimeout(showApiKeyModal, 500);
+    }
 });
