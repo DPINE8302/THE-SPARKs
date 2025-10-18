@@ -1,3 +1,4 @@
+
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
@@ -13,11 +14,6 @@ const errorDisplay = document.getElementById('errorDisplay') as HTMLDivElement;
 const langBtnEn = document.getElementById('langBtnEn') as HTMLButtonElement;
 const langBtnTh = document.getElementById('langBtnTh') as HTMLButtonElement;
 const themeToggleBtn = document.getElementById('themeToggleBtn') as HTMLButtonElement;
-const settingsBtn = document.getElementById('settingsBtn') as HTMLButtonElement;
-const apiKeyModal = document.getElementById('apiKeyModal') as HTMLDivElement;
-const closeModalBtn = document.getElementById('closeModalBtn') as HTMLButtonElement;
-const saveApiKeyBtn = document.getElementById('saveApiKeyBtn') as HTMLButtonElement;
-const apiKeyInput = document.getElementById('apiKeyInput') as HTMLInputElement;
 
 // State
 let currentLanguage = 'en'; // Default language
@@ -32,45 +28,19 @@ const loadingMessages = [
 
 
 // --- API Key Management & Initialization ---
-
-function initializeAiClient(apiKey: string) {
-    try {
-        ai = new GoogleGenAI({ apiKey });
-        return true;
-    } catch (error) {
-        console.error("Failed to initialize GoogleGenAI client:", error);
-        return false;
-    }
-}
-
-function showApiKeyModal() {
-    const savedKey = localStorage.getItem('gemini_api_key');
-    if (savedKey) {
-        apiKeyInput.value = savedKey;
-    }
-    apiKeyModal.style.display = 'flex';
-    setTimeout(() => apiKeyModal.classList.add('visible'), 10);
-}
-
-function hideApiKeyModal() {
-    apiKeyModal.classList.remove('visible');
-    setTimeout(() => {
-        apiKeyModal.style.display = 'none';
-    }, 300);
-}
-
-function saveApiKey() {
-    const apiKey = apiKeyInput.value.trim();
-    if (apiKey) {
-        if (initializeAiClient(apiKey)) {
-            localStorage.setItem('gemini_api_key', apiKey);
-            hideApiKeyModal();
-        } else {
-             alert('Invalid API Key format. Could not initialize AI Client.');
-        }
-    } else {
-        alert('Please enter an API Key.');
-    }
+// The API key is sourced from process.env.API_KEY, which is a secure
+// best practice. The API client is initialized at the top level.
+try {
+    ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+} catch (error) {
+    console.error("Failed to initialize GoogleGenAI client:", error);
+    // Display a persistent error message on the UI if initialization fails
+    document.addEventListener('DOMContentLoaded', () => {
+        errorDisplay.textContent = 'Could not initialize AI client. API_KEY might be missing or invalid.';
+        errorDisplay.style.display = 'block';
+        generateBtn.disabled = true;
+        topicInput.disabled = true;
+    });
 }
 
 
@@ -138,9 +108,8 @@ function initializeTheme() {
 
 async function generateQuote(topic: string) {
     if (!ai) {
-        errorDisplay.textContent = 'API Key not set. Please set it in the settings.';
+        errorDisplay.textContent = 'AI client is not initialized. Please check your API Key configuration.';
         errorDisplay.style.display = 'block';
-        showApiKeyModal();
         return;
     }
 
@@ -214,8 +183,7 @@ async function generateQuote(topic: string) {
         let errorMessage = 'An error occurred. Please try again.';
         if (error instanceof Error) {
             if (error.message.includes('API key not valid')) {
-                errorMessage = 'Your API key is not valid. Please check it in the settings.';
-                showApiKeyModal();
+                errorMessage = 'Your API key is not valid. Please check your configuration.';
             } else {
                 errorMessage = `Error: ${error.message}`;
             }
@@ -257,14 +225,7 @@ langBtnEn.addEventListener('click', () => setLanguage('en'));
 langBtnTh.addEventListener('click', () => setLanguage('th'));
 
 themeToggleBtn.addEventListener('click', toggleTheme);
-settingsBtn.addEventListener('click', showApiKeyModal);
-closeModalBtn.addEventListener('click', hideApiKeyModal);
-saveApiKeyBtn.addEventListener('click', saveApiKey);
-apiKeyModal.addEventListener('click', (e) => {
-    if (e.target === apiKeyModal) {
-        hideApiKeyModal();
-    }
-});
+
 
 // --- Initialization ---
 document.addEventListener('DOMContentLoaded', () => {
@@ -277,11 +238,4 @@ document.addEventListener('DOMContentLoaded', () => {
 
     quoteDisplay.innerHTML = `<div class="initial-message">${initialMessage}</div>`;
     quoteDisplay.classList.add('visible');
-
-    const savedApiKey = localStorage.getItem('gemini_api_key');
-    if (savedApiKey) {
-        initializeAiClient(savedApiKey);
-    } else {
-        setTimeout(showApiKeyModal, 500);
-    }
 });
